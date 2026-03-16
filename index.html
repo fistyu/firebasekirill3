@@ -3,85 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Облачное приложение</title>
+    <title>Облачное приложение с Firebase</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
-        .form-container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 300px; text-align: center; }
-        h1 { font-size: 1.5rem; color: #333; margin-bottom: 1.5rem; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background-color: #4285f4; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
-        button:hover { background-color: #3367d6; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .form-container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            width: 350px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        .success {
+            color: #48bb78;
+            margin-top: 10px;
+            display: none;
+        }
+        .error {
+            color: #f56565;
+            margin-top: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="form-container">
-        <h1>Опишите имя вашего ребенка</h1> <!-- Заголовок с вашего скриншота -->
+        <h1>Опишите имя вашего ребенка</h1>
         
-        <!-- Уберите method="post" action="...", мы будем ловить это через JS -->
         <form id="feedbackForm">
-            <!-- ВАЖНО: id должны совпадать с теми, что ищет JS -->
             <input type="text" id="userName" placeholder="Ваше имя" required>
             <input type="email" id="userEmail" placeholder="Ваш email" required>
             <button type="submit">Отправить</button>
         </form>
+        
+        <div class="success" id="successMessage">✓ Данные успешно сохранены!</div>
+        <div class="error" id="errorMessage">✗ Ошибка при отправке</div>
     </div>
 
-    <!-- 1. Импорт модулей Firebase (CDN) -->
-    <script type="module">
-        // Импортируем нужные функции из Firebase SDK
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <!-- Подключаем Firebase через CDN (более надежный способ для GitHub Pages) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-        // 2. Конфигурация Firebase (ВСТАВЬТЕ СВОИ ДАННЫЕ ИЗ КОНСОЛИ)
-        // Как это выглядит в консоли: Настройки проекта -> Общие -> Ваши приложения -> SDK setup
+    <script>
+        // ВАШИ КЛЮЧИ (которые вы только что скопировали из консоли)
         const firebaseConfig = {
-            apiKey: "AIzaSyBxAsdfghjkl12345_W9fUxM5sCg", // Пример, вставьте свой
-            authDomain: "your-project-name.firebaseapp.com",
-            projectId: "your-project-id",          // Укажите свой ID проекта
-            storageBucket: "your-project-id.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef1234567890"
+            apiKey: "AIzaSyD0M1YtX4cbN0_u3lm5hOmUe0-7D9141AQ",
+            authDomain: "fir-work-8a62a.firebaseapp.com",
+            projectId: "fir-work-8a62a",
+            storageBucket: "fir-work-8a62a.firebasestorage.app",
+            messagingSenderId: "678441263479",
+            appId: "1:678441263479:web:cd1cc6f4b44c1189ff8172",
+            measurementId: "G-DVTNR0PDDM"
         };
 
         // Инициализация Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app); // Получаем доступ к базе данных
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        // 3. Логика кнопки (обработчик формы)
-        document.getElementById("feedbackForm").addEventListener("submit", async (e) => {
-            e.preventDefault(); // Останавливаем перезагрузку страницы
+        // Получаем элементы формы
+        const form = document.getElementById('feedbackForm');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Скрываем сообщения при загрузке
+        successMessage.style.display = 'none';
+        errorMessage.style.display = 'none';
+
+        // Обработка отправки формы
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            // Получаем значения из полей (id должны совпадать!)
-            const nameInput = document.getElementById("userName").value;
-            const emailInput = document.getElementById("userEmail").value;
+            // Скрываем предыдущие сообщения
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+            
+            // Получаем значения из полей
+            const nameInput = document.getElementById('userName').value.trim();
+            const emailInput = document.getElementById('userEmail').value.trim();
 
-            // Проверка на пустоту (на всякий случай)
             if (!nameInput || !emailInput) {
-                alert("Пожалуйста, заполните все поля");
+                alert('Пожалуйста, заполните все поля');
                 return;
             }
 
             try {
-                // Запись в коллекцию "requests" (имя коллекции может быть любым, например "feedbacks")
-                await addDoc(collection(db, "requests"), {
+                // Сохраняем в Firestore
+                await db.collection('requests').add({
                     name: nameInput,
                     email: emailInput,
-                    timestamp: new Date(), // Добавляем дату отправки
-                    // phone: "+7(123)456-7890", // Это просто пример из вашего console.log, не обязательно
-                    // age: 18
+                    timestamp: new Date(),
+                    // Можно добавить дополнительную информацию
+                    userAgent: navigator.userAgent,
+                    pageUrl: window.location.href
                 });
                 
-                alert("Готово! Данные сохранены в Firebase.");
-                document.getElementById("feedbackForm").reset(); // Очищаем форму
+                // Показываем сообщение об успехе
+                successMessage.style.display = 'block';
+                form.reset();
+                
+                // Скрываем сообщение через 3 секунды
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 3000);
                 
             } catch (error) {
-                console.error("Ошибка записи: ", error);
-                alert("Ошибка при отправке. Проверьте консоль (F12) и настройки Firebase (Test Mode).");
+                console.error('Ошибка при сохранении:', error);
+                errorMessage.style.display = 'block';
+                
+                // Скрываем сообщение об ошибке через 5 секунд
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 5000);
             }
         });
 
-        // Просто для проверки, что скрипт загрузился (не обязательно)
-        console.log("Скрипт загружен, Firebase инициализирован");
+        // Для отладки - проверяем подключение
+        console.log('Firebase успешно инициализирован!');
     </script>
 </body>
 </html>
