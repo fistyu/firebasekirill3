@@ -1,21 +1,87 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Облачное приложение</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
+        .form-container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 300px; text-align: center; }
+        h1 { font-size: 1.5rem; color: #333; margin-bottom: 1.5rem; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #4285f4; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button:hover { background-color: #3367d6; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Опишите имя вашего ребенка</h1> <!-- Заголовок с вашего скриншота -->
+        
+        <!-- Уберите method="post" action="...", мы будем ловить это через JS -->
+        <form id="feedbackForm">
+            <!-- ВАЖНО: id должны совпадать с теми, что ищет JS -->
+            <input type="text" id="userName" placeholder="Ваше имя" required>
+            <input type="email" id="userEmail" placeholder="Ваш email" required>
+            <button type="submit">Отправить</button>
+        </form>
+    </div>
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyD0M1YtX4cbN0_u3lm5hOmUe0-7D9141AQ",
-  authDomain: "fir-work-8a62a.firebaseapp.com",
-  projectId: "fir-work-8a62a",
-  storageBucket: "fir-work-8a62a.firebasestorage.app",
-  messagingSenderId: "678441263479",
-  appId: "1:678441263479:web:cd1cc6f4b44c1189ff8172",
-  measurementId: "G-DVTNR0PDDM"
-};
+    <!-- 1. Импорт модулей Firebase (CDN) -->
+    <script type="module">
+        // Импортируем нужные функции из Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+        // 2. Конфигурация Firebase (ВСТАВЬТЕ СВОИ ДАННЫЕ ИЗ КОНСОЛИ)
+        // Как это выглядит в консоли: Настройки проекта -> Общие -> Ваши приложения -> SDK setup
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxAsdfghjkl12345_W9fUxM5sCg", // Пример, вставьте свой
+            authDomain: "your-project-name.firebaseapp.com",
+            projectId: "your-project-id",          // Укажите свой ID проекта
+            storageBucket: "your-project-id.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef1234567890"
+        };
+
+        // Инициализация Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app); // Получаем доступ к базе данных
+
+        // 3. Логика кнопки (обработчик формы)
+        document.getElementById("feedbackForm").addEventListener("submit", async (e) => {
+            e.preventDefault(); // Останавливаем перезагрузку страницы
+            
+            // Получаем значения из полей (id должны совпадать!)
+            const nameInput = document.getElementById("userName").value;
+            const emailInput = document.getElementById("userEmail").value;
+
+            // Проверка на пустоту (на всякий случай)
+            if (!nameInput || !emailInput) {
+                alert("Пожалуйста, заполните все поля");
+                return;
+            }
+
+            try {
+                // Запись в коллекцию "requests" (имя коллекции может быть любым, например "feedbacks")
+                await addDoc(collection(db, "requests"), {
+                    name: nameInput,
+                    email: emailInput,
+                    timestamp: new Date(), // Добавляем дату отправки
+                    // phone: "+7(123)456-7890", // Это просто пример из вашего console.log, не обязательно
+                    // age: 18
+                });
+                
+                alert("Готово! Данные сохранены в Firebase.");
+                document.getElementById("feedbackForm").reset(); // Очищаем форму
+                
+            } catch (error) {
+                console.error("Ошибка записи: ", error);
+                alert("Ошибка при отправке. Проверьте консоль (F12) и настройки Firebase (Test Mode).");
+            }
+        });
+
+        // Просто для проверки, что скрипт загрузился (не обязательно)
+        console.log("Скрипт загружен, Firebase инициализирован");
+    </script>
+</body>
+</html>
